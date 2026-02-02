@@ -1,0 +1,3 @@
+$targetDir = "C:\dev\Infra" 
+if (!(Test-Path $targetDir)) { New-Item -ItemType Directory -Force -Path $targetDir } 
+Copy-Item -Path "{{ .chezmoi.sourceDir }}/data/Infra/*" -Destination $targetDir -Force 

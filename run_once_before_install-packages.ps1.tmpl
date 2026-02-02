@@ -1,0 +1,33 @@
+# chezmoi:template:line-endings=crlf
+Write-Host ">>> 최종 개발 환경 구축 스크립트를 시작합니다." -ForegroundColor Cyan
+
+# 1. Winget 앱 설치 (GUI 도구들)
+$wingetApps = @(
+    "Google.Chrome", "Kakao.KakaoTalk", "Microsoft.VisualStudioCode", 
+    "Obsidian.Obsidian", "DeepL.DeepL", "voidtools.Everything", 
+    "Warp.Warp", "Docker.DockerDesktop", "Microsoft.WSL"
+)
+foreach ($app in $wingetApps) {
+    Write-Host "설치 확인 중: $app"
+    winget install --id $app --silent --accept-source-agreements --accept-package-agreements
+}
+
+# 2~3. Scoop 설정 및 개발 도구 설치
+Write-Host "Scoop 도구 설치 중..." -ForegroundColor Green
+$buckets = scoop bucket list
+if ($buckets -notmatch "extras") { scoop bucket add extras }
+$scoopApps = @("git", "openssh", "uv", "nvm-windows", "powertoys")
+foreach ($app in $scoopApps) {
+    scoop install $app 2>$null
+}
+
+# 4~5. Docker 인프라 (재부팅 후 실행 권장하지만 코드는 포함)
+if (Get-Command docker -ErrorAction SilentlyContinue) {
+    Write-Host "Docker 감지됨. Portainer 설정을 시도합니다." -ForegroundColor Green
+    docker volume create portainer_data 2>$null
+    docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/var/data portainer/portainer-ce:latest 2>$null
+} else {
+    Write-Host "Docker가 아직 준비되지 않았습니다. 재부팅 후 수동으로 진행하세요." -ForegroundColor Yellow
+}
+
+Write-Host ">>> 모든 설정이 끝났습니다!" -ForegroundColor Cyan

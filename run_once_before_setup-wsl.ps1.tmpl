@@ -1,0 +1,35 @@
+# chezmoi:template:line-endings=crlf
+$ErrorActionPreference = "Stop"
+Write-Host ">>> WSL/Ubuntu 준비를 시작합니다." -ForegroundColor Cyan
+
+$wslReady = $true
+try {
+    wsl --status | Out-Null
+} catch {
+    $wslReady = $false
+}
+
+if (-not $wslReady) {
+    Write-Host "WSL 구성 요소가 준비되지 않아 설치를 진행합니다." -ForegroundColor Yellow
+    wsl --install --no-distribution
+    Write-Host "재부팅 후 chezmoi apply를 다시 실행하세요." -ForegroundColor Yellow
+    exit 0
+}
+
+try {
+    wsl --set-default-version 2 | Out-Null
+} catch {
+    Write-Host "WSL 기본 버전을 2로 설정하지 못했습니다. 기존 설정을 유지합니다." -ForegroundColor Yellow
+}
+
+$distros = @(wsl --list --quiet 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+$ubuntu = $distros | Where-Object { $_ -like "Ubuntu*" } | Select-Object -First 1
+
+if (-not $ubuntu) {
+    Write-Host "Ubuntu 배포판을 설치합니다." -ForegroundColor Green
+    wsl --install -d Ubuntu
+    Write-Host "Ubuntu 최초 실행(사용자 생성) 후 chezmoi apply를 다시 실행하세요." -ForegroundColor Yellow
+    exit 0
+}
+
+Write-Host "WSL 준비 완료. 감지된 배포판: $ubuntu" -ForegroundColor Green

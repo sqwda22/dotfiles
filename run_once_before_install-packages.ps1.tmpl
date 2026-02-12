@@ -5,7 +5,7 @@ Write-Host ">>> 최종 개발 환경 구축 스크립트를 시작합니다." -F
 $wingetApps = @(
     "Google.Chrome", "Kakao.KakaoTalk", "Microsoft.VisualStudioCode", 
     "Obsidian.Obsidian", "DeepL.DeepL", "voidtools.Everything", 
-    "Warp.Warp", "Docker.DockerDesktop", "Microsoft.WSL"
+    "Warp.Warp", "Docker.DockerDesktop"
 )
 foreach ($app in $wingetApps) {
     Write-Host "설치 확인 중: $app"

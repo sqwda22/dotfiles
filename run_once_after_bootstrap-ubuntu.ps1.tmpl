@@ -1,0 +1,64 @@
+# chezmoi:template:line-endings=crlf
+$ErrorActionPreference = "Stop"
+Write-Host ">>> Ubuntu 개발환경 부트스트랩을 시작합니다." -ForegroundColor Cyan
+
+$distros = @(wsl --list --quiet 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+$ubuntu = $distros | Where-Object { $_ -like "Ubuntu*" } | Select-Object -First 1
+
+if (-not $ubuntu) {
+    Write-Host "Ubuntu 배포판이 없어 부트스트랩을 건너뜁니다." -ForegroundColor Yellow
+    exit 0
+}
+
+try {
+    wsl -d $ubuntu --cd ~ -- bash -lc "id -u" | Out-Null
+} catch {
+    Write-Host "Ubuntu 최초 사용자 설정이 완료되지 않았습니다. Ubuntu를 한 번 실행해 사용자 생성 후 다시 apply 하세요." -ForegroundColor Yellow
+    exit 0
+}
+
+$bootstrapScript = @'
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+
+sudo apt-get update
+sudo apt-get -y upgrade
+sudo apt-get install -y \
+  build-essential \
+  ca-certificates \
+  curl \
+  fd-find \
+  git \
+  jq \
+  pkg-config \
+  python3 \
+  python3-pip \
+  ripgrep \
+  unzip \
+  zip \
+  zsh
+
+if [ ! -d "$HOME/.nvm" ]; then
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+fi
+
+export NVM_DIR="$HOME/.nvm"
+# shellcheck disable=SC1090
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+if ! command -v nvm >/dev/null 2>&1; then
+  echo "nvm 로드 실패" >&2
+  exit 1
+fi
+
+nvm install --lts
+nvm alias default 'lts/*'
+nvm use --lts
+
+npm install -g npm@latest
+npm install -g @openai/codex@latest
+'@
+
+$bootstrapScript | wsl -d $ubuntu --cd ~ -- bash -s --
+
+Write-Host "Ubuntu 부트스트랩 완료: apt 기본 패키지, Node.js LTS, npm, Codex 설치" -ForegroundColor Green

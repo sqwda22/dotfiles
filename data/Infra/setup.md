@@ -5,6 +5,7 @@
 - Windows 호스트 준비(앱/도구)
 - WSL 설치 및 Ubuntu 배포판 준비
 - Ubuntu 내부 개발환경(기본 패키지, Node.js, npm, Codex) 자동 부트스트랩
+- WSL/Windows 공통 secrets 구조 자동 구성
 - Infra 템플릿(`C:\dev\Infra`) 동기화
 
 ## chezmoi 구성 파일
@@ -16,6 +17,10 @@
   - `Microsoft.WSL` 항목은 중복 방지를 위해 제외
 - `run_once_after_bootstrap-ubuntu.ps1.tmpl`
   - Ubuntu 내부 `apt update/upgrade`, 필수 패키지, nvm + Node.js LTS + npm + Codex 설치
+- `run_once_after_setup-secrets.ps1.tmpl`
+  - Windows/WSL에 `~/.secrets` 구조 생성
+  - PowerShell/`~/.bashrc`에 secrets 자동 로더 + 점검 함수 등록
+  - `~/.secrets/README.md`로 운영 규칙 요약 생성
 - `run_onchange_after_setup-infra.ps1.tmpl`
   - `data/Infra/*`를 `C:\dev\Infra`로 복사
 
@@ -33,12 +38,17 @@
 6. 재부팅 후 Ubuntu를 1회 실행해서 리눅스 사용자 생성 완료
 7. 다시 `chezmoi apply -v` 실행
    - Ubuntu 부트스트랩(apt/Node.js/npm/Codex) 단계가 이어서 실행됨
+8. secrets 파일 작성
+   - Windows: `$HOME\.secrets\dev.env`
+   - WSL: `~/.secrets/dev.env`
+   - 포맷: `KEY=VALUE`
 
 ## 운영 메모
 
 - Ubuntu 부트스트랩은 idempotent하게 작성되어 재실행 가능
 - `nvm` 기반으로 Node.js LTS를 설치/기본값으로 지정
 - Codex는 `npm install -g @openai/codex@latest`로 설치
+- Secrets 운영 상세: `data/Infra/secrets-setup.md`
 - Docker 인프라 접속 확인
   - Portainer: `https://localhost:9443`
   - Caddy: `http://localhost`
